@@ -1,5 +1,7 @@
 # 밑바닥부터 시작하는 딥러닝 2
 
+[밑 바닥부터 시작하는 딥러닝 2 번역판 Github repository](https://github.com/WegraLee/deep-learning-from-scratch-2)
+
 ## 스터디 목적
 
 - 연구실 스터디
