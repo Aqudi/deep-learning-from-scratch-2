@@ -78,3 +78,45 @@ def cos_similarity(x: np.ndarray, y: np.ndarray, eps=1e-8):
     nx = x / np.sqrt(np.sum(x ** 2) + eps)
     ny = y / np.sqrt(np.sum(y ** 2) + eps)
     return np.dot(nx, ny)
+
+
+def most_similar(
+    query: str,
+    word_to_id: dict,
+    id_to_word: dict,
+    word_matrix: np.ndarray,
+    top: int = 5,
+):
+    """[query]와 가장 유사한 상위 top개의 단어 출력
+
+    Args:
+        query (str): 질의할 단어
+        word_to_id (dict): 단어-정수 사전
+        id_to_word (dict): 정수-단어 사전
+        word_matrix (np.ndarray): 단어 동시발생행렬
+        top (int, optional): 상위 몇 개의 단어를 출력할지 설정. Defaults to 5.
+    """
+    # 검색어 추출
+    if query not in word_to_id:
+        print(f"{query}를 찾을 수 없습니다.")
+        return
+    print(f"\n[query] {query}")
+    query_id = word_to_id[query]
+    query_vec = word_matrix[query_id]
+
+    # 코사인 유사도 계산
+    vocab_size = len(id_to_word)
+    similarity = np.zeros(vocab_size)
+    for i in range(vocab_size):
+        similarity[i] = cos_similarity(word_matrix[i], query_vec)
+
+    # 코사인 유사도 기준으로 내림차순으로 출력
+    count = 0
+    for i in (-1 * similarity).argsort():
+        if id_to_word[i] == query:
+            continue
+        print(f" {id_to_word[i]}: {similarity[i]}")
+
+        count += 1
+        if count >= top:
+            return
