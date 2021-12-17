@@ -153,3 +153,55 @@ def ppmi(C: np.ndarray, verbose=False, eps=1e-8):
                 pbar.update(1)
     pbar.close()
     return M
+
+
+def create_contexts_target(corpus: np.ndarray, window_size=1):
+    """말뭉치를 맥락 리스트와 타겟 리스트로 변환
+
+    Args:
+        corpus (np.ndarray): 정수 인코딩 된 말뭉치
+        window_size (int, optional): 주변의 몇 개 단어를 맥락으로 볼 것인지 설정. Defaults to 1.
+
+    Returns:
+        np.ndarray: contexts
+        np.ndarray: target
+    """
+    target = corpus[window_size:-window_size]
+    contexts = []
+
+    for idx in range(window_size, len(corpus - window_size)):
+        cs = []
+        for t in range(-window_size, window_size + 1):
+            if t == 0:
+                continue
+            cs.append(corpus[idx + t])
+        contexts.append(cs)
+
+    return np.array(contexts), np.array(target)
+
+
+def convert_one_hot(corpus: np.ndarray, vocab_size: int):
+    """정수 인코딩된 말 뭉치를 원 핫 인코딩하기
+
+    Args:
+        corpus (np.ndarray): 정수 인코딩된 말뭉치
+        vocab_size (int): 단어 개수
+
+    Returns:
+        np.ndarray: 원 핫 인코딩된 말뭉치
+    """
+    N = corpus.shape[0]
+
+    if corpus.ndim == 1:
+        one_hot = np.zeros((N, vocab_size), dtype=np.int32)
+        for idx, word_id in enumerate(corpus):
+            one_hot[idx, word_id] = 1
+
+    elif corpus.ndim == 2:
+        C = corpus.shape[1]
+        one_hot = np.zeros((N, C, vocab_size), dtype=np.int32)
+        for idx_0, word_ids in enumerate(corpus):
+            for idx_1, word_id in enumerate(word_ids):
+                one_hot[idx_0, idx_1, word_id] = 1
+
+    return one_hot
