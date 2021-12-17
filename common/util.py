@@ -120,3 +120,36 @@ def most_similar(
         count += 1
         if count >= top:
             return
+
+
+def ppmi(C: np.ndarray, verbose=False, eps=1e-8):
+    """양의 정보상호량 계산 함수
+
+    빈도수를 이용하는 방식에서는 the와 같은 관사가 최다 빈도이기 때문에 높은 유사도를 가지는 경우가 많다.
+    이런 상황을 방지하기 위해서 단어가 단독으로 출현하는 횟수를 고려한 pmi 지수를 사용한다.
+    이때 pmi지수는 동시발생 횟수가 0일 때 음의 무한대 값을 가지기 때문에 max(0, pmi)를 한 ppmi를 사용한다.
+
+    Args:
+        C (np.ndarray): 동시발생행렬
+        verbose (bool, optional): 출력문을 자세히 볼 것인지 설정. Defaults to False.
+        eps ([type], optional): 0으로 나누기 에러 방지. Defaults to 1e-8.
+
+    Returns:
+        np.ndarray: 입력 동시발생행렬과 같은 크기의 ppmi 행렬
+    """
+    M = np.zeros_like(C, dtype=np.float32)
+    N = np.sum(C)
+    S = np.sum(C, axis=0)
+    total = C.shape[0] * C.shape[1]
+    cnt = 0
+
+    for i in range(C.shape[0]):
+        for j in range(C.shape[1]):
+            pmi = np.log2(C[i, j] * N / S[j] * S[i] + eps)
+            M[i, j] = max(0, pmi)
+
+            if verbose:
+                cnt += 1
+                if cnt & (total // 100) == 0:
+                    print(f"{(100*cnt/total):.1f} 완료")
+    return M
