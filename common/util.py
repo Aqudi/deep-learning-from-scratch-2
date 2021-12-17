@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 
 
 def clip_grads():
@@ -46,7 +47,7 @@ def create_co_matrix(corpus: np.ndarray, vocab_size: int, window_size: int = 1):
     co_matrix = np.zeros((vocab_size, vocab_size), dtype=np.int32)
 
     # i번째 단어 주변에 등장한 단어 빈도수 저장
-    for idx, word_id in enumerate(corpus):
+    for idx, word_id in tqdm(enumerate(corpus)):
         for i in range(1, window_size + 1):
             left_idx = idx - i
             right_idx = idx + i
@@ -141,15 +142,14 @@ def ppmi(C: np.ndarray, verbose=False, eps=1e-8):
     N = np.sum(C)
     S = np.sum(C, axis=0)
     total = C.shape[0] * C.shape[1]
-    cnt = 0
 
+    pbar = tqdm(total=total)
+    pbar.set_description(f"PPMI 계산: ")
     for i in range(C.shape[0]):
         for j in range(C.shape[1]):
             pmi = np.log2(C[i, j] * N / S[j] * S[i] + eps)
             M[i, j] = max(0, pmi)
-
             if verbose:
-                cnt += 1
-                if cnt & (total // 100) == 0:
-                    print(f"{(100*cnt/total):.1f} 완료")
+                pbar.update(1)
+    pbar.close()
     return M
