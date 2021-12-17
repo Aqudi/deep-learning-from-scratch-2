@@ -1,4 +1,6 @@
 numpy
 matplotlib
 scipy
+sklearn
 cupy
+tqdm
