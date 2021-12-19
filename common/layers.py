@@ -9,8 +9,8 @@
     forward: 순전파
     backward: 역전파
 """
-import numpy as np
-
+from common.np import *  # import numpy as np
+from common.config import GPU
 from common.functions import cross_entropy_error, softmax
 
 
@@ -138,3 +138,68 @@ class SoftmaxWithLoss:
         dx *= dout
         dx = dx / batch_size
         return dx
+
+
+class SigmoidWithLoss:
+    """SodmoidWithLoss 층
+
+    Sodmoid - Cross Entropy Error - L
+
+    Sigmoid 함수의 출력이
+    """
+
+    def __init__(self) -> None:
+        self.params, self.grads = [], []
+        self.loss = None
+        self.y = None  # sigmoid 출력
+        self.t = None  # 정답 데이터
+
+    def forward(self, x, t):
+        self.t = t
+        self.y = 1 / (1 + np.exp(-x))
+
+        self.loss = cross_entropy_error(np.c_[1 - self.y, self.y], self.t)
+
+        return self.loss
+
+    def backward(self, dout=1):
+        batch_size = self.t.shape[0]
+        dx = (self.y - self.t) * dout / batch_size
+        return dx
+
+
+class Embedding:
+    """Embedding 층
+
+    One-hot 벡터와 가중치 행렬의 곱의 연산량을 줄이기 위하여
+    특정 단어의 분산 표현을 추출해주는 층
+
+    메모리 사용량과 불필요한 계산을 줄일 수 있다.
+    """
+
+    def __init__(self, W) -> None:
+        self.params = [W]
+        self.grads = [np.zeros_like(W)]
+        self.idx = None
+
+    def forward(self, idx):
+        (W,) = self.params
+        if GPU:
+            idx = idx.get()
+        self.idx = idx
+        out = W[idx]
+        return out
+
+    def backward(self, dout):
+        (dW,) = self.grads
+        dW[...] = 0
+
+        # for i, word_id in enumerate(self.idx):
+        #     dW[word_id] += dout[i]
+        if GPU:
+            import cupyx
+
+            cupyx.scatter_add(dW, self.idx, dout)
+        else:
+            np.add.at(dW, self.idx, dout)
+        return None

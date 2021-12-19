@@ -6,7 +6,7 @@ update(params, grads)
     params: 가중치 리스트
     grads: 기울기 리스트
 """
-import numpy as np
+from common.np import *  # import numpy as np
 
 
 class SGD:

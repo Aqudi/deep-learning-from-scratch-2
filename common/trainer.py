@@ -2,7 +2,7 @@
 import sys
 
 sys.path.append("..")
-import numpy as np
+from common.np import *  # import numpy as np
 import time
 import matplotlib.pyplot as plt
 
