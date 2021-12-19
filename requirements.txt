@@ -3,4 +3,5 @@ matplotlib
 scipy
 sklearn
 cupy
+spacy
 tqdm
