@@ -226,3 +226,89 @@ def convert_one_hot(corpus: np.ndarray, vocab_size: int):
                 one_hot[idx_0, idx_1, word_id] = 1
 
     return one_hot
+
+
+def analogy(
+    a: str,
+    b: str,
+    c: str,
+    word_to_id: np.ndarray,
+    id_to_word: np.ndarray,
+    word_matrix: np.ndarray,
+    top=5,
+    answer: str = None,
+):
+    """a - b + c = ? 유추문제를 푸는 함수
+
+    Word2Vec으로 얻은 단어의 분산 표현은 다음과 같은 특징이 있다.
+
+    - 비슷한 단어를 가까이 모은다.
+    - 더 복잡한 패턴을 파악한다.
+
+    이 함수는 두 번째 특징을 가진다는 것을 보여주기 위한 유추 문제를 푸는 함수이다.
+
+    - king:main = queen:? 에서 ?에 들어갈 단어를 출력한다.
+
+    Args:
+        a (str): 단어
+        b (str): 단어
+        c (str): 단어
+        word_to_id (np.ndarray): 단어를 정수로 변환
+        id_to_word (np.ndarray): 정수를 단어로 변환
+        word_matrix (np.ndarray): word2vec으로 구한 단어 벡터들의 행렬
+        top (int, optional): 유사한 단어 몇 개를 보여줄 것인지. Defaults to 5.
+        answer (str, optional): a-b+c로 구해진 벡터와 answer사이의 유사도를 보고 싶을 때. Defaults to str.
+    """
+
+    for word in (a, b, c):
+        if word not in word_to_id:
+            print(f"{word}(을)를 찾을 수 없습니다.")
+            return
+
+    print(f"\n[analogy] {a}:{b} = {c}:?")
+    a_vec, b_vec, c_vec = (
+        word_matrix[word_to_id[a]],
+        word_matrix[word_to_id[b]],
+        word_matrix[word_to_id[c]],
+    )
+    # man:woman = king:queen과 같은 유추 문제를 풀기 위한 벡터 연산
+    query_vec = b_vec - a_vec + c_vec
+    query_vec = normalize(query_vec)
+
+    # 위의 연산에서 구해진 단어 벡터와 word_matrix의 벡터 사이의 유사도 계산
+    similarity = np.dot(word_matrix, query_vec)
+
+    if answer is not None:
+        print(f"==> {answer}:{str(np.dot(word_matrix[word_to_id[answer]], query_vec))}")
+
+    count = 0
+    # 오름차순 정렬인 argsort를 역으로 하여 내림차순 정렬
+    for i in (-1 * similarity).argsort():
+        if np.isnan(similarity[i]):
+            continue
+        if id_to_word[i] in (a, b, c):
+            continue
+        print(f" {id_to_word[i]}: {similarity[i]}")
+
+        count += 1
+        if count >= top:
+            return
+
+
+def normalize(x: np.ndarray):
+    """정규화
+
+    Args:
+        x (np.ndarray): 정규화할 벡터
+
+    Returns:
+        np.ndarray: 정규화된 벡터
+    """
+    if x.ndim == 2:
+        # 2차원일 때는 열방향 합계를 구해 행벡터로 만듬
+        s = np.sqrt((x * x).sum(axis=1))
+        x /= s.reshape((s.shape[0], 1))
+    elif x.ndim == 1:
+        s = np.sqrt((x * x).sum())
+        x /= s
+    return x
